@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds" > 
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%date-[%-5level] [%thread] [%logger{35}] - %msg %n</pattern>
+		</encoder>
+	</appender>
+	
+	<appender name="commonLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>./logs/common.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- daily rollover -->
+			<fileNamePattern>./logs/common.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+
+		<encoder>
+			<pattern>%date - [%level] - %logger in %thread    %message%xException%n</pattern> 
+		</encoder>
+	</appender>
+	
+	<logger name="commonLog" level="TRACE" additivity="false">
+		<appender-ref ref="com.longvu.ted.utils" />
+	</logger>
+	
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
