@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-	compile group: 'com.ning', name: 'async-http-client', version: '1.9.40'
+	compile group: 'org.asynchttpclient', name: 'async-http-client', version: '2.4.9'
 	compile group: 'org.apache.poi', name: 'poi', version: '3.17'
 	compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
 	compile group: 'com.google.inject', name: 'guice', version: '4.2.0'

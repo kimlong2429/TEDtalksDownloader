@@ -56,6 +56,7 @@ public class XlsxGenerateActionImpl implements IGenerateAction {
 		}
 		
 		sheet.setColumnWidth(0, 25000);
+		sheet.setSelected(true);
 	}
 	
 	private void generateHorizontalSheet(TEDtalk talk, Workbook wb, TranscriptDocument script) {
@@ -73,6 +74,7 @@ public class XlsxGenerateActionImpl implements IGenerateAction {
 		sheet.setColumnWidth(1, 750);
 		sheet.setColumnWidth(2, 750);
 		sheet.setColumnWidth(3, 25000);
+		sheet.setSelected(true);
 	}
 
 	private int insertIntroductions(TEDtalk talk, Workbook wb, Sheet sheet, boolean isHorizontal) {

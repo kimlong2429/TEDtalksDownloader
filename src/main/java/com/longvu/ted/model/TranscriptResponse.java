@@ -3,8 +3,10 @@ package com.longvu.ted.model;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.longvu.ted.model.Paragraph.StandardizedParagraph;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TranscriptResponse {
 	public class StandardizedTranscript {
 		private List<StandardizedParagraph> paragraphs;

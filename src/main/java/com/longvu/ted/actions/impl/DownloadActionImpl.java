@@ -3,6 +3,9 @@ package com.longvu.ted.actions.impl;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+
 import com.google.inject.Inject;
 import com.longvu.ted.TEDtalk;
 import com.longvu.ted.actions.api.AsyncHttpClientFactory;
@@ -10,7 +13,6 @@ import com.longvu.ted.actions.api.IDownloadAction;
 import com.longvu.ted.model.TranscriptResponse;
 import com.longvu.ted.response.handler.TranscriptResponseHandler;
 import com.longvu.ted.utils.TEDutils;
-import com.ning.http.client.AsyncHttpClient;
 
 public class DownloadActionImpl implements IDownloadAction {
 
@@ -26,13 +28,24 @@ public class DownloadActionImpl implements IDownloadAction {
 	@Override
 	public CompletableFuture<TranscriptResponse> download(TEDtalk talk, String language) {
 		return CompletableFuture.supplyAsync(() -> {
-			try (AsyncHttpClient client = factory.create()) {
+			AsyncHttpClient client = null;
+			try {
+				client = new DefaultAsyncHttpClient(TEDutils.generateDefaultTEDAsyncHttpClientConfig());
+				
 				return client.prepareGet(TEDutils.makeDownloadTranscriptUrl(talk.getTalkId(), language))
 						.execute(new TranscriptResponseHandler())
 						.get();
 			} catch (Exception e) {
 				throw new RuntimeException(e);
-			} 
+			} finally {
+				if (client != null) {
+					try {
+						client.close();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
 		}, executor);
 	}
 

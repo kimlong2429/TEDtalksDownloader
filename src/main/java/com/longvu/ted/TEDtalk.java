@@ -1,7 +1,13 @@
 package com.longvu.ted;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+
+import org.asynchttpclient.AsyncCompletionHandler;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.asynchttpclient.Response;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -11,9 +17,6 @@ import com.longvu.ted.actions.api.IGenerateAction;
 import com.longvu.ted.actions.api.ISaveAction;
 import com.longvu.ted.utils.TEDutils;
 import com.longvu.ted.utils.TranscriptDocument;
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.Response;
 
 public class TEDtalk {
 	private static final String VI = "vi";
@@ -55,13 +58,16 @@ public class TEDtalk {
 	
 	private CompletableFuture<Void> extractTalkInfor() {
 		return CompletableFuture.supplyAsync(() -> {
-			try (AsyncHttpClient client = factory.create()) {
+			AsyncHttpClient client = null;
+			try {
+				client = new DefaultAsyncHttpClient(TEDutils.generateDefaultTEDAsyncHttpClientConfig());
+				
 				return client.prepareGet(talkUrl)
 						.execute(new AsyncCompletionHandler<Void>() {
 
 							@Override
 							public Void onCompleted(Response response) throws Exception {
-								String content = response.getResponseBody("utf-8");
+								String content = response.getResponseBody(Charset.forName("utf-8"));
 								TEDtalk.this.talkId = TEDutils.parseTalkId(content);
 								TEDtalk.this.title = TEDutils.parseTalkTitle(content);
 								TEDtalk.this.description = TEDutils.parseTalkDescription(content);
@@ -71,7 +77,15 @@ public class TEDtalk {
 						.get();
 			} catch (Exception e) {
 				throw new RuntimeException(e);
-			} 
+			} finally {
+				if (client != null) {
+					try {
+						client.close();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
 		}, executor);
 	}
 	
@@ -90,6 +104,8 @@ public class TEDtalk {
 	public String getDescription() {
 		return description;
 	}
+	
+	
 
 	@Override
 	public String toString() {

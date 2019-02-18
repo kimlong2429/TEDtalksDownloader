@@ -1,33 +1,43 @@
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.asynchttpclient.AsyncCompletionHandler;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.AsyncHttpClientConfig;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.asynchttpclient.Response;
 
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.Response;
+import com.longvu.ted.utils.TEDutils;
 
 public class MainTest {
-	public static void main(String[] args) throws InterruptedException, ExecutionException {
-		AsyncHttpClient client = new AsyncHttpClient();
-		client.prepareGet("https://www.ted.com/talks/tim_brown_urges_designers_to_think_big")
+	public static void main(String[] args) throws InterruptedException, ExecutionException, IOException, Exception {
+		AsyncHttpClientConfig config = TEDutils.generateDefaultTEDAsyncHttpClientConfig();
+		AsyncHttpClient client = new DefaultAsyncHttpClient(config);
+		client.prepareGet("https://www.ted.com/talks/alex_gendler_how_tsunamis_work")
 		.execute(new AsyncCompletionHandler<String>() {
 
 			@Override
 			public String onCompleted(Response response) throws Exception {
-				String content = response.getResponseBody("utf-8");
+				String content = response.getResponseBody(Charset.forName("utf-8"));
 				System.out.println(content);
 				// find talk Id
-				Matcher m = Pattern.compile("\"talk_id\":(\\d+)").matcher(content);
+				Matcher m = Pattern.compile("\"current_talk\":\"(\\d+)").matcher(content);
 				if (m.find()) {
 					System.out.println("Talk Id: " + m.group(1));
+				} else {
+					System.err.println("Not found talk id");
 				}
 				
 				// find talk title
 				m = Pattern.compile("<title>(.*?)</title>").matcher(content);
 				if (m.find()) {
 					System.out.println("Title: " + m.group(1));
+				} else {
+					System.err.println("Not found talk id");
 				}
 				
 				// find talk description
@@ -41,7 +51,6 @@ public class MainTest {
 		})
 		.get();
 		
-		// close connection
 		client.close();
 	}
 }
