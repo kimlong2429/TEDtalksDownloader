@@ -119,8 +119,7 @@ public class PdfExportAction implements IExportAction<Document>{
 	}
 
 	private void writeTableContent(Document pdf, DuoDocument document) {
-		// TODO write table content
-		logger.debug("Registered fonts: {}", FontFactory.getRegisteredFonts());
+		logger.trace("Registered fonts: {}", FontFactory.getRegisteredFonts());
 		
 		try {
 			PdfPTable table = new PdfPTable(2);
