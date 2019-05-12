@@ -1,77 +1,94 @@
 package com.longvu.ted;
 
 import java.nio.charset.Charset;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 import org.asynchttpclient.AsyncCompletionHandler;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.longvu.ted.actions.api.AsyncHttpClientFactory;
+import com.itextpdf.text.Document;
 import com.longvu.ted.actions.api.IDownloadAction;
-import com.longvu.ted.actions.api.IGenerateAction;
-import com.longvu.ted.actions.api.ISaveAction;
+import com.longvu.ted.actions.api.IExportAction;
+import com.longvu.ted.actions.api.IMappingAction;
+import com.longvu.ted.model.Language;
+import com.longvu.ted.model.Transcript;
 import com.longvu.ted.utils.TEDutils;
-import com.longvu.ted.utils.TranscriptDocument;
 
+@Singleton
 public class TEDtalk {
-	private static final String VI = "vi";
-	private static final String EN = "en";
+	private static Logger logger = LoggerFactory.getLogger(TEDtalk.class);
 	
-	private String talkUrl;
-
 	@Inject
 	private IDownloadAction downloadAction;
 	@Inject
-	private IGenerateAction generateAction;
+	private IMappingAction mappingAction;
 	@Inject
-	private ISaveAction saveAction;
-	@Inject
-	private AsyncHttpClientFactory factory;
+	private IExportAction<Document> pdfExportAction;
 	@Inject
 	private ExecutorService executor;
+
+	private String talkUrl;
 	
 	private String talkId;
 	private String title;
+	private String author;
 	private String description;
+	private Map<Language, Transcript> transcripts;
+	
+	private String fileName;
 
 	@Inject
 	public TEDtalk(@Named("talkUrl") String talkUrl) {
 		this.talkUrl = talkUrl;
+		this.transcripts = new ConcurrentHashMap<>();
 	}
 	
 	public CompletableFuture<Void> download() {
-		return extractTalkInfor()
-		.thenCompose(r ->
-				downloadAction.download(TEDtalk.this, EN).thenCombineAsync(
-					downloadAction.download(TEDtalk.this, VI), 
-					TranscriptDocument::new))
-		.thenCompose(r ->
-				generateAction.generate(TEDtalk.this, r))
-		.thenCompose(r ->
-				saveAction.save(TEDtalk.this, r));
+		CompletableFuture<TEDtalk> future = extractTalkInfor();
+		
+		// download required transcripts
+		CompletableFuture<Void> enSubtitleDownload = future
+				.thenAcceptAsync(r -> transcripts.put(Language.EN, downloadAction.download(Language.EN)), executor);
+		CompletableFuture<Void> viSubtitleDownload = future
+				.thenAcceptAsync(r -> transcripts.put(Language.VI, downloadAction.download(Language.VI)), executor);
+		
+		// map them together
+		return CompletableFuture.allOf(enSubtitleDownload, viSubtitleDownload)
+				.thenApplyAsync(r -> mappingAction.map(getTranscript(Language.EN), getTranscript(Language.VI)), 
+						executor)
+				.thenAccept(pdfExportAction::export);
 	}
 	
-	private CompletableFuture<Void> extractTalkInfor() {
+	private CompletableFuture<TEDtalk> extractTalkInfor() {
 		return CompletableFuture.supplyAsync(() -> {
 			AsyncHttpClient client = null;
 			try {
 				client = new DefaultAsyncHttpClient(TEDutils.generateDefaultTEDAsyncHttpClientConfig());
 				
+				logger.debug("Getting TED talk informations");
 				return client.prepareGet(talkUrl)
-						.execute(new AsyncCompletionHandler<Void>() {
+						.execute(new AsyncCompletionHandler<TEDtalk>() {
 
 							@Override
-							public Void onCompleted(Response response) throws Exception {
+							public TEDtalk onCompleted(Response response) throws Exception {
 								String content = response.getResponseBody(Charset.forName("utf-8"));
 								TEDtalk.this.talkId = TEDutils.parseTalkId(content);
 								TEDtalk.this.title = TEDutils.parseTalkTitle(content);
+								TEDtalk.this.author = TEDutils.parseTalkAuthor(content);
 								TEDtalk.this.description = TEDutils.parseTalkDescription(content);
-								return null;
+								
+								logger.debug("Parsed TED talk informations: {}", TEDtalk.this);
+								return TEDtalk.this;
 							}
 						})
 						.get();
@@ -82,7 +99,7 @@ public class TEDtalk {
 					try {
 						client.close();
 					} catch (Exception e) {
-						e.printStackTrace();
+						logger.error("Failed to close client ", e);
 					}
 				}
 			}
@@ -105,14 +122,34 @@ public class TEDtalk {
 		return description;
 	}
 	
+	public Map<Language, Transcript> getAllTranscipts() {
+		return transcripts;
+	}
 	
+	public Transcript getTranscript(Language language) {
+		return transcripts.get(language);
+	}
+	
+	public void addTranscipt(Language language, Transcript transcript) {
+		transcripts.put(language, transcript);
+	}
+
+	public String getAuthor() {
+		return author;
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
 
 	@Override
 	public String toString() {
-		return "TEDtalk [talkUrl=" + talkUrl + ", talkId=" + talkId + ", title=" + title + ", description="
-				+ description + "]";
+		return "TEDtalk [talkId=" + talkId + ", title=" + title + ", author=" + author + ", description=" + description
+				+ "]";
 	}
-
-	
 	
 }

@@ -14,10 +14,13 @@ import org.asynchttpclient.AsyncHttpClientConfig;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.netty.ssl.JsseSslEngineFactory;
 
+import com.longvu.ted.TEDtalk;
+
 public class TEDutils {
 	private static final String DOWNLOAD_TRANSCRIPT_URL = "https://www.ted.com/talks/%s/transcript.json?language=%s";
 	private static final String TALK_ID_PATTERN = "\"current_talk\":\"(\\d+)";
-	private static final String TALK_TITLE_PATTERN = "<title>(.*?)</title>";
+	private static final String TALK_TITLE_PATTERN = "<meta.*property.*title.*content=\"(.*?)\".*>";
+	private static final String TALK_AUTHOR_PATTERN = "<meta.*author.*content=\"(.*?)\".*>";
 	private static final String TALK_DESCRIPTION_PATTERN = "<meta\\s+name=\"description\"\\s+content=\"(.*?)\"";
 	
 	public static String makeDownloadTranscriptUrl(String talkId, String language) {
@@ -34,6 +37,14 @@ public class TEDutils {
 	
 	public static String parseTalkTitle(String content) {
 		Matcher m = Pattern.compile(TALK_TITLE_PATTERN).matcher(content);
+		if (m.find()) {
+			return m.group(1);
+		}
+		return null;
+	}
+	
+	public static String parseTalkAuthor(String content) {
+		Matcher m = Pattern.compile(TALK_AUTHOR_PATTERN).matcher(content);
 		if (m.find()) {
 			return m.group(1);
 		}
@@ -78,5 +89,14 @@ public class TEDutils {
 				.build();
 		
 		return config;
+	}
+
+	public static String generateFileName(TEDtalk talk) {
+		String fileName = new StringBuilder(talk.getTalkId())
+				.append("_").append(talk.getAuthor())
+				.append("_").append(talk.getTitle())
+				.toString().replaceAll("\\s+", "-")
+				.replaceAll("[\\/|?\\.:*%\"<>]*", "");
+		return fileName;
 	}
 }

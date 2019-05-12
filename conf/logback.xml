@@ -8,24 +8,8 @@
 		</encoder>
 	</appender>
 	
-	<appender name="commonLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>./logs/common.log</file>
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<!-- daily rollover -->
-			<fileNamePattern>./logs/common.%d{yyyy-MM-dd}.log</fileNamePattern>
-			<maxHistory>30</maxHistory>
-		</rollingPolicy>
-
-		<encoder>
-			<pattern>%date - [%level] - %logger in %thread    %message%xException%n</pattern> 
-		</encoder>
-	</appender>
-	
-	<logger name="commonLog" level="TRACE" additivity="false">
-		<appender-ref ref="com.longvu.ted.utils" />
+	<logger name="com.longvu.ted" level="DEBUG">
+		<appender-ref ref="STDOUT" />
 	</logger>
 	
-	<root level="DEBUG">
-		<appender-ref ref="STDOUT" />
-	</root>
 </configuration>

@@ -1,10 +1,8 @@
 package com.longvu.ted.actions.api;
 
-import java.util.concurrent.CompletableFuture;
-
-import com.longvu.ted.TEDtalk;
-import com.longvu.ted.model.TranscriptResponse;
+import com.longvu.ted.model.Language;
+import com.longvu.ted.model.Transcript;
 
 public interface IDownloadAction {
-	public CompletableFuture<TranscriptResponse> download(TEDtalk talk, String language);
+	public Transcript download(Language language);
 }

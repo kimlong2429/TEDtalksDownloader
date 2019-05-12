@@ -2,10 +2,14 @@ package com.longvu.ted;
 
 import java.util.concurrent.ExecutorService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 public class Ted {
+	private static Logger logger = LoggerFactory.getLogger(Ted.class);
 	
 	public static void main(String[] args) {
 		Injector injector = Guice.createInjector(
@@ -16,11 +20,14 @@ public class Ted {
 		talk.download()
 		.whenComplete((r, t) -> {
 			if (t == null) {
-				ExecutorService executor = injector.getInstance(ExecutorService.class);
-				if (executor != null) {
-					executor.shutdown();
-				}
-				System.out.println("DONE.");
+				logger.info("DONE.");
+			} else {
+				logger.error("Failed to download [{}] ", talk.getTalkUrl(), t);
+			}
+			
+			ExecutorService executor = injector.getInstance(ExecutorService.class);
+			if (executor != null) {
+				executor.shutdown();
 			}
 		})
 		.join();
