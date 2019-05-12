@@ -24,7 +24,7 @@ public class TranscriptResponseHandler extends AsyncCompletionHandler<Transcript
 	public Transcript onCompleted(Response response) throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 		String text = response.getResponseBody(Charset.forName("utf-8")).replaceAll("\\\\n", " ");
-		logger.debug("Content {} transcipt: {}", language, text);
+		logger.trace("Content {} transcipt: {}", language, text);
 		return mapper.readValue(text, Transcript.class);
 	}
 }

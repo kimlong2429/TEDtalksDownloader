@@ -1,10 +1,12 @@
 package com.longvu.ted;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,14 +35,38 @@ public class ActionsModule extends AbstractModule {
 		bind(IMappingAction.class).to(MappingActionImpl.class);
 		bind(new TypeLiteral<IExportAction<Document>>(){}).to(PdfExportAction.class);
 
-		// bind font
+		// register fonts
 		URL url = Thread.currentThread().getContextClassLoader().getResource(FONTS_DIR);
-		try {
-			String dir = new File(url.toURI()).getAbsolutePath();
-			int fonts = FontFactory.registerDirectory(dir, true);
-			logger.debug("Registered {} fonts from {}", fonts, dir);
-		} catch (URISyntaxException e) {
-		}
+		registerFonts(url);
 	}
 	
+	private void registerFonts(URL url) {
+		try {
+			File f = new File(url.getPath());
+			if (!f.exists()) {
+				// get current jar
+				File jarFile = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+				
+				JarFile jf = new JarFile(jarFile);
+				Enumeration<JarEntry> entries = jf.entries();
+				
+				while (entries.hasMoreElements()) {
+					JarEntry element = entries.nextElement();
+					if (element.getName().startsWith(FONTS_DIR) && !element.getName().endsWith("/")) {
+						try {
+							FontFactory.register(element.getName());
+						} catch (Exception e) {
+							logger.error("Failed to register font: {} ", element.getName(), e);
+						}
+					}
+				}
+				jf.close();
+			} else {
+				int fonts = FontFactory.registerDirectory(url.getPath(), true);
+				logger.trace("Registered {} fonts from {}", fonts, url.getPath());
+			}
+		} catch (Exception e) {
+			logger.error("Failed to register fonts", e);
+		}
+	}
 }

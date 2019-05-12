@@ -25,7 +25,7 @@ public class MappingActionImpl implements IMappingAction {
 	public DuoDocument map(Transcript source, Transcript translated) {
 		// mapping each cue from translated transcript to source transcript
 		DuoDocument doc = doMapping(translated, source);
-		logger.debug("Translated document: {}", doc);
+		logger.trace("Translated document: {}", doc);
 		
 		return doc;
 	}
@@ -97,13 +97,13 @@ public class MappingActionImpl implements IMappingAction {
 		
 		try {
 			String output = mapper.writeValueAsString(sortedCues);
-			logger.debug("Sorted cues: {}", output);
+			logger.trace("Sorted cues: {}", output);
 		} catch (JsonProcessingException e) {
 		}
 		
 		try {
 			String output = mapper.writeValueAsString(destCueList);
-			logger.debug("Translated transcript: {}", output);
+			logger.trace("Translated transcript: {}", output);
 		} catch (JsonProcessingException e) {
 		}
 		

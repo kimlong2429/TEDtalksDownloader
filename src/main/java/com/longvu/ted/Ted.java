@@ -10,8 +10,11 @@ import com.google.inject.Injector;
 
 public class Ted {
 	private static Logger logger = LoggerFactory.getLogger(Ted.class);
+	private static String LOGGER_PATH = "/logback.xml";
 	
 	public static void main(String[] args) {
+		System.setProperty("logback.configurationFile", LOGGER_PATH);
+		
 		Injector injector = Guice.createInjector(
 				new ArgumentsModule(args), 
 				new ActionsModule());
