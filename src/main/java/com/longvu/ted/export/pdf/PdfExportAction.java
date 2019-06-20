@@ -45,7 +45,7 @@ public class PdfExportAction implements IExportAction<Document>{
 		PdfWriter writer = null;
 		
 		try {
-			pdf = new Document(PageSize.A4, 36, 36, 100, 50);
+			pdf = new Document(PageSize.A4, 36, 36, 100, 60);
 			writer = PdfWriter.getInstance(pdf, new FileOutputStream(filePath));
 			writer.setPageEvent(new HeaderFooterPageEvent(talk));
 			pdf.open();
